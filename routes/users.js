@@ -94,7 +94,7 @@ function recordAttempt(username, validUsername, success, next) {
 
 router.get('/audit', function (req, res, next) {
     //check params for valid_username filter
-    let validUsernameFilter = req.query.valid_username;
+    let validUsernameFilter = req.query.valid_username || "all";
     let sqlquery = "SELECT * FROM login_attempts";
     if(validUsernameFilter === "valid_only"){
         sqlquery += " WHERE valid_username = TRUE";
