@@ -1,0 +1,43 @@
+<!doctype html>
+<html>
+  <head>
+    <title><%=shopData.shopName%> - Audit</title>
+    <link rel="stylesheet"  type="text/css" href="/main.css" />
+  </head>
+<body>
+    <h1>List of Login Attempts</h1>
+    <form method="GET" action="audit">
+        <label for="valid_username">Filter by Valid Username:</label>
+        <!-- select the one based on validUsernameFilter -->
+        <select id="valid_username" name="valid_username">
+            <option value="all" <%= validUsernameFilter === "all" ? "selected" : "" %>>All</option>
+            <option value="valid_only" <%= validUsernameFilter === "valid_only" ? "selected" : "" %>>Valid Usernames Only</option>
+            <option value="invalid_only" <%= validUsernameFilter === "invalid_only" ? "selected" : "" %>>Invalid Usernames Only</option>
+        </select>
+        <input type="submit" value="Filter" />
+    </form>
+
+    <table>
+      <tr>
+        <th>Username</th>
+        <!-- Add valid username collumn only when displaying a mix -->
+        <% 
+            if(validUsernameFilter==="all"){ %>
+                <th>Valid Username</th>
+        <% } %>
+        <th>Date</th>
+        <th>Success</th>
+      </tr>
+      <% loginAttempts.forEach(function(attempt) { %>
+      <tr>
+        <td><%= attempt.username %></td>
+        <% if(validUsernameFilter==="all"){ %>
+            <td><%= attempt.valid_username %></td>
+        <% } %>
+        <td><%= attempt.attempt_date %></td>
+        <td><%= attempt.success %></td>
+      </tr>
+      <% }); %>
+    </table>
+</body>
+</html>
