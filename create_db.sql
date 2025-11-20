@@ -12,19 +12,21 @@ CREATE TABLE IF NOT EXISTS books (
     PRIMARY KEY(id));
 
 CREATE TABLE IF NOT EXISTS users (
-    username  VARCHAR(50),
-    hashed_password  VARCHAR(255),
+    user_id INT AUTO_INCREMENT PRIMARY KEY,
+    username  VARCHAR(50) NOT NULL UNIQUE,
+    hashed_password  VARCHAR(255) NOT NULL,
     first_name     VARCHAR(50),
     last_name      VARCHAR(50),
-    email     VARCHAR(100));
+    email     VARCHAR(100) NOT NULL UNIQUE
+);
 
 CREATE TABLE if NOT EXISTS login_attempts (
-    id INT AUTO_INCREMENT,
-    username VARCHAR(50),
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NULL,
+    attempted_username VARCHAR(50) NOT NULL,
     valid_username BOOLEAN,
-    attempt_date DATETIME DEFAULT CURRENT_TIMESTAMP,
-    success BOOLEAN,
-    PRIMARY KEY(id)
+    attempt_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    success BOOLEAN NOT NULL
 );
 
 

@@ -47,29 +47,27 @@ router.get('/login', function (req, res, next) {
     res.render('login.ejs')
 })
 router.post('/login_attempt', function (req, res, next) {
-    console.log(req.body);
-
     const sqlqueryUsers = "SELECT * FROM users WHERE username = ?";
     const searchterm = [req.body.username];
-    let userFound = false;
 
     db.query(sqlqueryUsers, searchterm, (err, result) => {
         if (err) return next(err);
-        userFound = result.length > 0;
-        // No user found
-        if (!userFound) {
-            recordAttempt(req.body.username, false, 0, next); 
+
+        // Username not found
+        if (result.length === 0) {
+            recordAttempt(null, req.body.username, false, next);
             return res.send('No such user found');
         }
 
-        const hashedPassword = result[0].hashed_password;
+        const user = result[0];
+        const hashedPassword = user.hashed_password;
         const plainPassword = req.body.password;
 
         bcrypt.compare(plainPassword, hashedPassword, (err, isMatch) => {
             if (err) return next(err);
 
-            // Record login attempt now that we know success/failure
-            recordAttempt(req.body.username, true, isMatch ? 1 : 0, next);
+            // Record attempt with user_id and attempted_username
+            recordAttempt(user.user_id, req.body.username, isMatch, next);
 
             if (isMatch) {
                 res.send('Login successful!');
@@ -80,11 +78,13 @@ router.post('/login_attempt', function (req, res, next) {
     });
 });
 
-
 // Utility function for recording login attempts
-function recordAttempt(username, validUsername, success, next) {
-    const sql = "INSERT INTO login_attempts (username, valid_username, attempt_date, success) VALUES (?, ?, ?, ?)";
-    const params = [username, validUsername, new Date(), success];
+function recordAttempt(userId, attemptedUsername, success, next) {
+    const sql = `
+        INSERT INTO login_attempts (user_id, attempted_username, attempt_date, success)
+        VALUES (?, ?, ?, ?)
+    `;
+    const params = [userId, attemptedUsername, new Date(), success];
 
     db.query(sql, params, (err) => {
         if (err) return next(err);
@@ -92,23 +92,26 @@ function recordAttempt(username, validUsername, success, next) {
     });
 }
 
+
 router.get('/audit', function (req, res, next) {
-    //check params for valid_username filter
-    let validUsernameFilter = req.query.valid_username || "all";
+    let filter = req.query.valid_username || "all";
+
     let sqlquery = "SELECT * FROM login_attempts";
-    if(validUsernameFilter === "valid_only"){
-        sqlquery += " WHERE valid_username = TRUE";
-    }
-    else if(validUsernameFilter === "invalid_only"){
-        sqlquery += " WHERE valid_username = FALSE";
+
+    if (filter === "valid_only") {
+        sqlquery += " WHERE user_id IS NOT NULL";
+    } 
+    else if (filter === "invalid_only") {
+        sqlquery += " WHERE user_id IS NULL";
     }
 
     db.query(sqlquery, (err, result) => {
-        if (err) {
-            next(err)
-        }
-        console.log(result)
-        res.render("audit.ejs", { loginAttempts: result, validUsernameFilter: validUsernameFilter })
+        if (err) return next(err);
+        
+        res.render("audit.ejs", {
+            loginAttempts: result,
+            validUsernameFilter: filter
+        });
     });
 });
 

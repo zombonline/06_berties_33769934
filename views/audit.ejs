@@ -30,9 +30,9 @@
       </tr>
       <% loginAttempts.forEach(function(attempt) { %>
       <tr>
-        <td><%= attempt.username %></td>
+        <td><%= attempt.attempted_username %></td>
         <% if(validUsernameFilter==="all"){ %>
-            <td><%= attempt.valid_username %></td>
+            <td><%= attempt.user_id ? "true" : "false" %></td>
         <% } %>
         <td><%= attempt.attempt_date %></td>
         <td><%= attempt.success %></td>
