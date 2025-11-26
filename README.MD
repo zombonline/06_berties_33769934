@@ -21,3 +21,17 @@ The application includes a login-attempt auditing feature that records every sig
 Both valid and invalid usernames are recorded. This ensures that attempts made with incorrect or similar usernames are still logged, providing a more complete picture of access patterns.
 
 The /audit page displays all recorded attempts in a table and includes a filter to view only valid usernames, only invalid usernames, or all attempts together.
+
+## Access Control
+I set up a middleware function inside `middleware/redirectLogin.js`. It will simply check there is a userID in the current session and if there is not one, it will serve the login page.
+I implemented this on the list of users page and also the add book page. These seemed like appropriate examples of where some access control would be needed, as not everyone should have access to people's information and not everyone should be allowed to add books to our database. 
+
+## Validation
+I set up some validation checks inside the `/registered` route to confirm the user has entered valid details, such as a long enough username and password and a valid email. The email is checked already via HTML but multiple layers of validation are best practise. I also set up some validation rules inside the `/bookadded` route to confirm the price of the book being entered was not negative and also that the book title was not an empty string.
+
+## Sanitisation
+I applied sanitisation to particular user-inputted fields. In this project I have only sanitised values such as names (usernames, first and last names, names of books etc.) as these were values that would later be displayed on the books list page and user list page etc.
+I chose not to sanitise the following:
+- Price: This can be validated and then converted to an actual number value (express-validator isNumber check) and then processed further using the Number() function to check if it turns into a NaN value.
+- Email: Emails can have a lot of technically valid symbols and nonsense in them so sanitising may break them. Using validation will ensure the input adheres to the RFC format which doesn't allow chars such as `<` and `>`
+- Password: This will never be rendered/displayed on screen anyway and is hashed before entering the database where it can cause no harm.

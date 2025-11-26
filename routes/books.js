@@ -1,8 +1,10 @@
 // Create a new router
 const express = require("express")
 const router = express.Router()
+const redirectLogin = require('../middleware/redirectLogin');
+const { check, validationResult } = require('express-validator');
 
-router.get('/list', function(req,res,next){
+router.get('/list',  function(req,res,next){
     let sqlquery = "SELECT * FROM books";
     
     db.query(sqlquery, (err, result) => {
@@ -26,22 +28,30 @@ router.get('/bargainbooks', function(req,res,next){
     })
 })
 
-router.get('/addbook', function(req,res,next){
-    res.render("addbook.ejs", {})
+router.get('/addbook', redirectLogin, function(req,res,next){
+    res.render("addbook.ejs", { errors: [] })
 })
 
-router.post('/bookadded', function (req, res, next) {
-    console.log(req.body)
+router.post('/bookadded', 
+    [
+        check('price').isFloat({ min: 0.00 }).withMessage('Price must be a positive number'),
+        check('name').isLength({ min: 1 }).withMessage('Book name cannot be empty')
+    ],
+    function (req, res, next) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.render('addbook.ejs', { errors: errors.array() });
+    }
     // saving data in database
     let sqlquery = "INSERT INTO books (name, price) VALUES (?,?)"
     // execute sql query
-    let newrecord = [req.body.name, req.body.price]
+    let newrecord = [req.sanitize(req.body.name), Number(req.body.price)]
     db.query(sqlquery, newrecord, (err, result) => {
         if (err) {
             next(err)
         }
         else
-            res.send(' This book is added to database, name: '+ req.body.name + ' price '+ req.body.price)
+            res.send(' This book is added to database, name: '+ req.sanitize(req.body.name) + ' price '+ Number(req.body.price))
     })
 }) 
 

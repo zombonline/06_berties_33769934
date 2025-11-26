@@ -28,12 +28,3 @@ CREATE TABLE if NOT EXISTS login_attempts (
     attempt_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     success BOOLEAN NOT NULL
 );
-
-
-# Create the database user and grant permissions
-CREATE USER IF NOT EXISTS 'berties_books_app'@'localhost' IDENTIFIED BY 'qwertyuiop';
-GRANT ALL PRIVILEGES ON berties_books.* TO 'berties_books_app'@'localhost';
-FLUSH PRIVILEGES;
-CREATE USER IF NOT EXISTS 'berties_books_app'@'localhost' IDENTIFIED BY 'qwertyuiop'; 
-GRANT ALL PRIVILEGES ON berties_books.* TO 'berties_books_app'@'localhost';
-

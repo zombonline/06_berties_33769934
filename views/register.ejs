@@ -14,5 +14,12 @@
         <p>Email: <input id="email" type="email" name="email" /></p>
         <input type="submit" value="Register" />
       </form>
+      <% if (errors.length > 0) { %>
+        <ul style="color: red;">
+          <% errors.forEach(function(error) { %>
+            <li><%= error.msg %></li>
+          <% }); %>
+        </ul>
+      <% } %>
   </body>
 </html>

@@ -2,16 +2,27 @@
 const express = require("express")
 const router = express.Router()
 const bcrypt = require('bcrypt');
-
+const redirectLogin = require('../middleware/redirectLogin');
+const { check, validationResult } = require('express-validator');
 
 router.get('/register', function (req, res, next) {
-    res.render('register.ejs')
+    res.render('register.ejs', { errors: [] })
 })
 
-router.post('/registered', function (req, res, next) {
-    //ensure user does not already exist
-    let sqlqueryCheck = "SELECT * FROM users WHERE username = ?";
-    let searchterm = [req.body.username];
+router.post('/registered', 
+                [
+                    check('email').isEmail().withMessage('Must be a valid email address'), 
+                    check('username').isLength({ min: 3, max: 20}).withMessage('Username must be between 3 and 20 characters'),
+                    check('password').isLength({ min: 8}).withMessage('Password must be at least 8 characters long')
+                ], 
+                 function (req, res, next) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        res.render('./register', { errors: errors.array() });
+    }
+    else { 
+            let sqlqueryCheck = "SELECT * FROM users WHERE username = ?";
+    let searchterm = [req.sanitize(req.body.username)];
     db.query(sqlqueryCheck, searchterm, (err, result) => {
         if (err) {
             return next(err);
@@ -30,32 +41,44 @@ router.post('/registered', function (req, res, next) {
         // saving data in database
         let sqlquery = "INSERT INTO users (username, hashed_password, first_name, last_name, email) VALUES (?,?,?,?,?)"
         // execute sql query
-        let newrecord = [req.body.username, hashedPassword, req.body.first, req.body.last, req.body.email]
+        let newrecord = [req.sanitize(req.body.username), hashedPassword, req.sanitize(req.body.first), req.sanitize(req.body.last), req.body.email]
         db.query(sqlquery, newrecord, (err, result) => {
             if (err) {
                 next(err)
             }
             else
-                result = 'Hello '+ req.body.first + ' '+ req.body.last +' you are now registered!  We will send an email to you at ' + req.body.email
+                result = 'Hello '+ req.sanitize(req.body.first) + ' '+ req.sanitize(req.body.last) +' you are now registered!  We will send an email to you at ' + req.body.email + '. <br/>'
             result += 'Your password is: '+ req.body.password +' and your hashed password is: '+ hashedPassword
             res.send(result)
         })
     });
+    }
 });
+
 
 router.get('/login', function (req, res, next) {
     res.render('login.ejs')
 })
+
+router.get('/logout', redirectLogin, (req,res) => {
+    req.session.destroy(err => {
+    if (err) {
+        return res.redirect('./')
+    }
+    res.send('you are now logged out. <a href='+'/'+'>Home</a>');
+    })
+})
+
 router.post('/login_attempt', function (req, res, next) {
     const sqlqueryUsers = "SELECT * FROM users WHERE username = ?";
-    const searchterm = [req.body.username];
+    const searchterm = [req.sanitize(req.body.username)];
 
     db.query(sqlqueryUsers, searchterm, (err, result) => {
         if (err) return next(err);
 
         // Username not found
         if (result.length === 0) {
-            recordAttempt(null, req.body.username, false, next);
+            recordAttempt(null, req.sanitize(req.body.username), false, next);
             return res.send('No such user found');
         }
 
@@ -67,9 +90,10 @@ router.post('/login_attempt', function (req, res, next) {
             if (err) return next(err);
 
             // Record attempt with user_id and attempted_username
-            recordAttempt(user.user_id, req.body.username, isMatch, next);
+            recordAttempt(user.user_id, req.sanitize(req.body.username), isMatch, next);
 
             if (isMatch) {
+                req.session.userId = user.user_id; // Set the user ID in session
                 res.send('Login successful!');
             } else {
                 res.send('Invalid password');
@@ -115,7 +139,7 @@ router.get('/audit', function (req, res, next) {
     });
 });
 
-router.get('/list', function (req, res, next) {
+router.get('/list', redirectLogin ,function (req, res, next) {
     let sqlquery = "SELECT * FROM users";
     db.query(sqlquery, (err, result) => {
         if (err) {
@@ -125,7 +149,6 @@ router.get('/list', function (req, res, next) {
         res.render("listUsers.ejs", { users: result})
     })
 })
-       
 
 // Export the router object so index.js can access it
 module.exports = router
