@@ -35,3 +35,6 @@ I chose not to sanitise the following:
 - Price: This can be validated and then converted to an actual number value (express-validator isNumber check) and then processed further using the Number() function to check if it turns into a NaN value.
 - Email: Emails can have a lot of technically valid symbols and nonsense in them so sanitising may break them. Using validation will ensure the input adheres to the RFC format which doesn't allow chars such as `<` and `>`
 - Password: This will never be rendered/displayed on screen anyway and is hashed before entering the database where it can cause no harm.
+
+## Note about redirect login.
+I wanted to create a way of resuing the redirect login middleware wherever, so I made it its own file I could load with the `require` function. I made it explicity load `/users/login` so that routes in the `/books` handler would still be able to use it. This presented an issue when posted on the virtual machine since the base url include some sub directories `(/usr/224)`. For this reason I made the middleware check the `.env` file for a `BASE_URL` parameter so that I could specify one in the virtual machine environment and it would work both in the dev and production environment.
