@@ -38,3 +38,22 @@ I chose not to sanitise the following:
 
 ## Note about redirect login.
 I wanted to create a way of resuing the redirect login middleware wherever, so I made it its own file I could load with the `require` function. I made it explicity load `/users/login` so that routes in the `/books` handler would still be able to use it. This presented an issue when posted on the virtual machine since the base url include some sub directories `(/usr/224)`. For this reason I made the middleware check the `.env` file for a `BASE_URL` parameter so that I could specify one in the virtual machine environment and it would work both in the dev and production environment.
+
+## Books API Endpoint
+I created a flexible API endpoint at `/api/books` that allows clients to retrieve book data with optional filtering and sorting. This endpoint responds with JSON and is intended for programmatic access rather than rendering views.
+
+### Query Parameters
+| Parameter | Description                                                                       |
+|-----------|-----------------------------------------------------------------------------------|
+| search    | Filters books whose name contains the provided search term.                       |
+| min_price | Only returns books with a price greater than or equal to this value.              |
+| max_price | Only returns books with a price less than or equal to this value.                 |
+| sort      | Sorts the results. Accepted values are: price (ascending) or name (alphabetical). |   
+```
+/api/books?search=doc
+/api/books?min_price=5&max_price=20
+/api/books?search=the&sort=name
+/api/books?search=data&min_price=5&sort=price
+```
+
+This is achieved by allowing each term to attach their own "AND value" string to the sqlquery, the initial statement starts with `SELECT * FROM books WHERE 1=1` so that any parameter can be applied using the `AND` keyword.
